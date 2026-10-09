@@ -2,7 +2,7 @@
 
 An ordinary camera looks at the floor beside a wall edge and recovers what moves on the other side. It runs in the browser with no install, no laser and no special hardware.
 
-[Live!](https://anttiluode.github.io/KulmanTakaa/index.html) · [phone actor!](https://anttiluode.github.io/KulmanTakaa/actor.html) [setup guide!](https://anttiluode.github.io/KulmanTakaa/kulmantakaa-setup-guide.html)
+[Live](https://anttiluode.github.io/KulmanTakaa/index.html) · [Phone actor](https://anttiluode.github.io/KulmanTakaa/actor.html)   [Setup guide](https://anttiluode.github.io/KulmanTakaa/kulmantakaa-setup-guide.html)
 
 ## The physics in one line
 

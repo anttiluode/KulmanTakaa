@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A visual guide to arranging a hidden phone, an opaque edge and a camera, then selecting the three floor-geometry points in KulmanTakaa.">
+<title>KulmanTakaa — set up the corner camera</title>
+<style>
+:root{color-scheme:light;--paper:#f5f3ee;--ink:#192927;--muted:#586561;--line:#d8ded8;--teal:#14675e;--light-teal:#e4f0eb;--amber:#b97415;--amber-light:#fff2d7;--red:#ae4239;--white:#fff;--blue:#327780}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,a,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--amber);outline-offset:4px}a{color:var(--teal);text-underline-offset:3px}.wrap{max-width:1100px;margin:auto;padding:28px 28px 48px}.mast{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:24px;border-bottom:1px solid var(--line)}.wordmark{font-size:16px;font-weight:750;letter-spacing:.1em}.draft{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}.hero{padding:34px 0 27px;max-width:850px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--teal);margin:0 0 10px}h1{font-size:clamp(32px,4.7vw,50px);line-height:1.08;letter-spacing:-.045em;margin:0 0 18px;font-weight:750}.intro{font-size:19px;color:var(--muted);max-width:700px;margin:0}.kit{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:23px;color:var(--ink);font-size:14px}.kit span::before{content:"+";color:var(--teal);font-weight:700;margin-right:7px}.section{margin-top:22px;background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden}.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:24px 26px 18px}.section-head h2{font-size:23px;line-height:1.25;letter-spacing:-.025em;margin:4px 0 8px}.section-head p{margin:0;color:var(--muted);max-width:650px}.number{font-size:12px;letter-spacing:.1em;color:var(--teal);font-weight:700}.segmented{display:flex;padding:4px;background:#edf0eb;border-radius:11px;flex-shrink:0;gap:3px}.segmented button{border:0;background:transparent;border-radius:8px;padding:9px 14px;font-size:14px;white-space:nowrap;color:var(--muted)}.segmented button[aria-pressed="true"]{background:var(--ink);color:var(--white)}.bench{display:grid;grid-template-columns:minmax(0,1fr) 245px;align-items:start;gap:12px;padding:0 26px 24px}.diagram{min-width:0}.diagram svg{display:block;width:100%;height:auto}.diagram-caption{font-size:13px;color:var(--muted);margin:0 4px}.tips{padding-top:11px}.tip{padding:13px 0;border-bottom:1px solid var(--line)}.tip:last-child{border-bottom:0}.tip h3{font-size:15px;margin:0 0 5px}.tip p{font-size:14px;margin:0;color:var(--muted)}.switch{display:flex;align-items:center;gap:8px;font-size:14px;margin:11px 4px 0}.switch input{accent-color:var(--teal);width:17px;height:17px}.state{margin:0 26px 23px;border-radius:10px;padding:12px 16px;background:var(--light-teal);color:#174d43;display:flex;align-items:start;gap:9px;font-size:14px}.state[data-state="bad"]{background:#f9e9e4;color:#85332d}.state b{font-weight:650}.click-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(265px,1fr);gap:25px;padding:0 26px 25px}.camera-frame{border-radius:12px;overflow:hidden;background:#edf1e9;border:1px solid var(--line)}.camera-frame svg{display:block;width:100%;height:auto;touch-action:manipulation}.camera-caption{font-size:13px;color:var(--muted);margin:10px 1px 0}.click-list{padding-top:2px}.click-step{display:flex;gap:12px;margin-bottom:17px;padding:10px;border-radius:10px}.click-step[data-active="true"]{background:var(--light-teal)}.step-num{display:grid;place-items:center;width:31px;height:31px;flex-shrink:0;border:1px solid var(--line);border-radius:50%;color:var(--teal);font-weight:700}.click-step[data-active="true"] .step-num{background:var(--teal);color:var(--white);border-color:var(--teal)}.click-step h3{font-size:16px;margin:0 0 3px}.click-step p{font-size:14px;color:var(--muted);margin:0}.feedback{min-height:56px;font-size:14px;color:var(--teal);margin:3px 10px 13px}.feedback[data-error="true"]{color:var(--red)}.reset{background:var(--white);border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:14px;margin-left:10px}.reset:hover{background:var(--paper)}.point{cursor:pointer}.point circle{stroke:var(--white);stroke-width:3;fill:var(--teal)}.point text{fill:var(--white);font-size:19px;font-weight:750;pointer-events:none}.point[data-next="true"] .halo{opacity:1}.point .halo{opacity:0;fill:none;stroke:var(--teal);stroke-width:2;stroke-dasharray:4 4}.point[data-done="true"] circle:not(.halo){fill:#75928a}.footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:35px;margin-top:30px;padding:0 8px}.footer-grid h2{font-size:22px;line-height:1.25;letter-spacing:-.02em;margin:0 0 17px}.run-steps{padding-left:23px;margin:0}.run-steps li{padding-left:5px;margin:0 0 12px;font-size:15px}.proof{border-left:3px solid var(--amber);padding-left:19px}.proof p{font-size:15px;margin:0 0 12px;color:var(--muted)}.proof strong{color:var(--ink)}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.actions a{display:inline-block;padding:10px 15px;border-radius:10px;border:1px solid var(--line);background:var(--white);text-decoration:none;font-size:14px}.actions a:first-child{background:var(--teal);border-color:var(--teal);color:var(--white)}.bottom{margin-top:32px;border-top:1px solid var(--line);padding-top:18px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:20px}.bottom p{margin:0}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}svg .label{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;fill:var(--ink)}svg .small{font-size:13px;fill:var(--muted)}svg .tiny{font-size:12px;fill:var(--muted)}
+@media(max-width:880px){.bench{grid-template-columns:1fr}.tips{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding-top:2px}.tip{border:0;padding:7px 0}.click-layout{grid-template-columns:1fr 1fr;gap:16px}.segmented{align-self:flex-start}.section-head{flex-wrap:wrap}}
+@media(max-width:620px){.wrap{padding:19px 16px 32px}.mast{gap:12px}.draft{font-size:10px;letter-spacing:.07em}.wordmark{font-size:13px}.hero{padding-top:27px}.intro{font-size:17px}.section-head{padding:20px 17px 13px}.section-head h2{font-size:21px}.bench{padding:0 12px 17px}.tips{grid-template-columns:1fr;gap:0;padding:0 7px}.tip{padding:9px 0;border-bottom:1px solid var(--line)}.state{margin:0 17px 18px}.click-layout{display:block;padding:0 17px 19px}.click-list{margin-top:16px}.click-step{margin-bottom:8px}.footer-grid{grid-template-columns:1fr;gap:25px;padding:0 3px}.bottom{display:block}.bottom p+p{margin-top:8px}.kit{gap:7px 14px}.camera-caption{font-size:12px}}
+svg{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.point:focus-visible .halo{opacity:1}.mobile-hint{display:none;color:var(--muted);font-size:13px;margin:10px 0}
+@media(max-width:620px){.diagram{overflow-x:auto}.diagram svg{min-width:600px}.camera-frame{overflow:auto}.camera-frame svg{min-width:480px}.mobile-hint{display:block}.camera-frame svg .label{font-size:21px}.camera-frame .point circle:not(.halo):not(.hit){r:23px}.camera-frame .point .halo{r:33px}.camera-frame .point text{font-size:27px}.camera-frame .point .hit{r:48px}}
+@media(prefers-reduced-motion:no-preference){.point .halo{transition:opacity .15s}.segmented button{transition:background .15s}}
+@media print{body{background:white}.wrap{padding:0}.segmented,.switch,.reset,.actions{display:none}.section{break-inside:avoid}.footer-grid{break-inside:avoid}.hero{padding-top:20px}.draft::after{content:" · offline instructions"}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="mast"><span class="wordmark">KULMANTAKAA</span><span class="draft">Setup guide · local draft</span></header>
+<section class="hero">
+<p class="eyebrow">Your first corner-camera test</p>
+<h1>Hide the phone.<br>Watch the floor.</h1>
+<p class="intro">Put an opaque edge between the camera and a bright phone. Keep the floor beside that edge visible: it is where light from the hidden phone can reach the camera.</p>
+<div class="kit" aria-label="Equipment"><span>A camera device</span><span>A second phone</span><span>Tall cardboard or a box</span><span>A matte floor or sheet of paper</span></div>
+</section>
+
+<section class="section" aria-labelledby="bench-heading">
+<div class="section-head"><div><span class="number">01 / ARRANGE THE BENCH</span><h2 id="bench-heading">The wall must block the direct view.</h2><p>Seen from above. The edge should be taller than the camera lens. Start in a dim room with the phone close to the corner.</p></div><div class="segmented" aria-label="Compare camera arrangements"><button id="hidden-btn" type="button" aria-pressed="true">Hidden phone</button><button id="visible-btn" type="button" aria-pressed="false">Direct view</button></div></div>
+<p class="mobile-hint" style="margin:0 20px 12px">Swipe the diagram sideways to see the whole arrangement.</p>
+<div class="bench">
+<div class="diagram">
+<svg id="plan" viewBox="0 0 720 410" role="img" aria-labelledby="plan-title plan-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="plan-title">Correct corner-camera arrangement, seen from above</title>
+<desc id="plan-desc">A camera is set back along the visible side of an opaque wall. A phone is hidden beyond its vertical edge. Its light can illuminate a visible floor patch beside the edge, which the camera observes.</desc>
+<defs>
+<pattern id="plan-grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#dce3da" stroke-width=".7"/></pattern>
+<pattern id="wall-hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#73807a" stroke-width="1" opacity=".25"/></pattern>
+<marker id="light-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L6 3L0 6Z" fill="#b97415"/></marker>
+</defs>
+<rect x="16" y="18" width="688" height="374" rx="12" fill="#f1f4ed"/>
+<rect x="16" y="18" width="688" height="374" rx="12" fill="url(#plan-grid)"/>
+<path d="M365 205L229 205A136 136 0 0 0 343 339Z" fill="#d4e8df" stroke="#70a597" stroke-width="1.2"/>
+<rect x="55" y="36" width="310" height="169" fill="#65736b"/>
+<rect x="55" y="36" width="310" height="169" fill="url(#wall-hatch)"/>
+<text x="83" y="89" font-family="system-ui,sans-serif" font-size="18" font-weight="650" fill="#ffffff">OPAQUE WALL / BOX</text>
+<text x="83" y="113" font-family="system-ui,sans-serif" font-size="14" fill="#e8eee7">Tall enough to hide the phone.</text>
+<path d="M55 205H365V36" fill="none" stroke="#293b32" stroke-width="3"/>
+<g id="light-paths">
+<path id="indirect-path" d="M535 98L333 254L145 305" fill="none" stroke="#b97415" stroke-width="3" marker-mid="url(#light-arrow)" marker-end="url(#light-arrow)"/>
+<circle id="relay-dot" cx="333" cy="254" r="6" fill="#b97415" stroke="#ffffff" stroke-width="2"/>
+<path id="direct-path" d="M145 305L333.4 205" fill="none" stroke="#ae4239" stroke-width="2.1" stroke-dasharray="6 5"/>
+<g id="block-mark"><circle cx="333.4" cy="205" r="13" fill="#fff8f2"/><path d="M327.4 199L339.4 211M339.4 199L327.4 211" stroke="#ae4239" stroke-width="3"/></g>
+<text id="direct-label" x="68" y="246" class="small" style="fill:#ae4239">Direct line blocked</text>
+</g>
+<circle cx="365" cy="205" r="5" fill="#192927" stroke="#ffffff" stroke-width="2"/>
+<path d="M343 185L361 200" stroke="#edf3ed" fill="none"/>
+<text x="340" y="181" text-anchor="end" class="label" style="fill:#ffffff">Corner’s foot</text>
+<text x="398" y="264" class="label">Visible floor patch</text>
+<text x="398" y="285" class="small">This is the camera’s target.</text>
+<g transform="translate(145 305) rotate(-24)"><rect x="-21" y="-13" width="38" height="26" rx="5" fill="#192927"/><rect x="17" y="-8" width="10" height="16" rx="2" fill="#327780"/><circle cx="-9" cy="-1" r="4" fill="#bac8bd"/></g>
+<text x="54" y="354" class="label">Camera · visible side</text>
+<text x="54" y="376" class="small">Low, set back along the wall.</text>
+<g id="phone-object" transform="translate(535 98)"><circle r="29" fill="#fff2d7"/><rect x="-14" y="-23" width="28" height="46" rx="5" fill="#192927"/><rect x="-10" y="-17" width="20" height="33" rx="1" fill="#eab64c"/><circle cx="0" cy="20" r="1.5" fill="#ffffff"/></g>
+<text id="phone-title" x="580" y="91" class="label">Hidden phone</text>
+<text id="phone-subtitle" x="580" y="113" class="small">Upright.</text>
+<text id="phone-direction" x="471" y="155" class="small">Screen faces the corner.</text>
+</svg>
+<p class="diagram-caption">The orange path is light: phone → floor → camera. The dashed line checks whether the phone is physically hidden. Drawing is schematic, not to scale.</p>
+<label class="switch"><input id="paths-toggle" type="checkbox" checked>Show the light paths</label>
+</div>
+<aside class="tips" aria-label="Placement tips">
+<div class="tip"><h3>Give the edge a real job.</h3><p>From the lens position, the wall must interrupt the straight line to the phone. Also check for visible reflections of its screen.</p></div>
+<div class="tip"><h3>Leave the floor exposed.</h3><p>A light, matte patch beside the corner should stay in view. Keep your hands and the cardboard out of this patch.</p></div>
+<div class="tip"><h3>Use a bright actor first.</h3><p>The phone’s emitted light is an easier starting test than light reflected from a person in another room.</p></div>
+</aside>
+</div>
+<p id="setup-state" class="state" data-state="good" role="status"><span aria-hidden="true">✓</span><span><b>Correct arrangement:</b> the camera cannot see the phone directly, but can see the floor receiving its light.</span></p>
+</section>
+
+<section class="section" aria-labelledby="click-heading">
+<div class="section-head"><div><span class="number">02 / SELECT THE FLOOR GEOMETRY</span><h2 id="click-heading">Three clicks, in this order.</h2><p>In KulmanTakaa, choose <strong>Camera</strong>, then <strong>Set corner</strong>. Practise here by selecting the numbered points.</p></div></div>
+<div class="click-layout">
+<div>
+<p class="mobile-hint">Swipe the camera illustration sideways if a point is out of view.</p>
+<div class="camera-frame">
+<svg id="camera-view" viewBox="0 0 640 480" role="group" aria-labelledby="camera-title camera-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="camera-title">Practice the three clicks in a camera-view illustration</title>
+<desc id="camera-desc">The upright wall is on the left. Point one is its foot at the corner. Point two lies along the wall's base. Point three is farther across the floor. The hidden phone does not appear in this view. The three numbered targets are buttons.</desc>
+<defs><linearGradient id="floor-shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dbe3d4"/><stop offset="1" stop-color="#f0eddd"/></linearGradient><pattern id="camera-wall" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M-3 16L16-3M3 19L19 3" stroke="#7a887b" stroke-width=".8" opacity=".18"/></pattern><clipPath id="floor-clip"><path d="M269.7 235.94L640 190L640 480H103.7Z"/></clipPath></defs>
+<rect width="640" height="480" fill="url(#floor-shade)"/>
+<g stroke="#bec9b9" stroke-width="1" opacity=".8"><path d="M320 143L20 480M320 143L190 480M320 143L390 480M320 143L610 480M320 143L640 365"/><path d="M0 210H640M0 244H640M0 298H640M0 371H640M0 461H640"/></g>
+<path d="M0 0H258.46L269.7 235.94L103.72 480H0Z" fill="#819080"/>
+<path d="M0 0H258.46L269.7 235.94L103.72 480H0Z" fill="url(#camera-wall)"/>
+<path d="M258.46 0L269.7 235.94L103.72 480" fill="none" stroke="#425b4a" stroke-width="3"/>
+<path id="practice-wedge" d="M269.7 235.94L168.45 384.77A180 180 0 0 0 448.57 256.08Z" fill="#d4ae4580" stroke="#ba8f20" stroke-width="1.5" visibility="hidden" clip-path="url(#floor-clip)"/>
+<path id="practice-rays" d="M179.24 368.95L269.7 235.94L448.55 256.08" fill="none" stroke="#14675e" stroke-width="2.3" stroke-dasharray="7 6" visibility="hidden"/>
+<text x="33" y="50" class="label" style="fill:#ffffff;font-size:18px;font-weight:600">OPAQUE WALL</text>
+<text x="378" y="437" class="label" style="font-size:18px">VISIBLE FLOOR</text>
+<text x="304" y="206" class="label">Foot of the edge</text>
+<text x="30" y="410" class="label">Along the wall’s base</text>
+<text x="460" y="306" text-anchor="middle" class="label">Far end of the patch</text>
+<g id="point-1" class="point" data-next="true" role="button" tabindex="0" aria-label="Point 1: foot of the corner" transform="translate(269.7 235.94)"><circle class="hit" r="48" style="fill:transparent;stroke:none;pointer-events:all"/><circle class="halo" r="25"/><circle r="17"/><text text-anchor="middle" dominant-baseline="central">1</text></g>
+<g id="point-2" class="point" data-next="false" role="button" tabindex="0" aria-label="Point 2: along the wall's base" transform="translate(179.24 368.95)"><circle class="hit" r="48" style="fill:transparent;stroke:none;pointer-events:all"/><circle class="halo" r="25"/><circle r="17"/><text text-anchor="middle" dominant-baseline="central">2</text></g>
+<g id="point-3" class="point" data-next="false" role="button" tabindex="0" aria-label="Point 3: far end of the visible floor patch" transform="translate(448.55 256.08)"><circle class="hit" r="48" style="fill:transparent;stroke:none;pointer-events:all"/><circle class="halo" r="25"/><circle r="17"/><text text-anchor="middle" dominant-baseline="central">3</text></g>
+</svg>
+</div>
+<p class="camera-caption">Camera-view illustration. In your actual image, the locations differ. Follow the physical edge and floor, not these example pixel positions.</p>
+</div>
+<div class="click-list">
+<div id="step-1" class="click-step" data-active="true"><span class="step-num">1</span><div><h3>Foot of the corner</h3><p>Where the vertical edge touches the floor. This is the centre of the angular wedge.</p></div></div>
+<div id="step-2" class="click-step" data-active="false"><span class="step-num">2</span><div><h3>Along the wall’s base</h3><p>Follow the line where the wall meets the floor, toward the camera’s side. Click on that line.</p></div></div>
+<div id="step-3" class="click-step" data-active="false"><span class="step-num">3</span><div><h3>Far end of the floor patch</h3><p>Click out across the visible floor beside the edge. This sets the other direction and the patch’s reach.</p></div></div>
+<p id="click-feedback" class="feedback" role="status" aria-live="polite">Start with point 1: the corner’s foot.</p>
+<button id="restart-practice" class="reset" type="button">Practise again</button>
+</div>
+</div>
+</section>
+
+<div class="footer-grid">
+<section aria-labelledby="run-heading"><p class="eyebrow">03 / TRY THE MEASUREMENT</p><h2 id="run-heading">Learn the room, then move the light.</h2><ol class="run-steps"><li>On the hidden phone, open <strong>actor.html</strong>, use landscape orientation and high screen brightness. Choose <strong>Off</strong>.</li><li>Keep the camera still. In the instrument, try <strong>Lock exposure</strong>, then <strong>Learn empty room</strong>.</li><li>Switch the phone to <strong>Slots</strong>. Record about a minute and inspect the recovered waterfall and score.</li><li>Switch the phone to <strong>Still</strong> or <strong>Off</strong>, restart the score and record another minute. A fresh score should not claim tracking of the moving schedule.</li></ol></section>
+<section class="proof" aria-labelledby="proof-heading"><p class="eyebrow">WHAT WOULD COUNT?</p><h2 id="proof-heading">Recovery must follow the optical signal.</h2><p>The <strong>“What changed”</strong> panel is amplified background subtraction. The narrow <strong>“actor says”</strong> stripe is a clock-generated reference. Neither panel alone proves that the camera recovered hidden motion.</p><p>For stronger evidence, recover independently chosen hidden movements from a recording of the floor, then compare with a separate record of the actor’s movements.</p><p>Block the light path to the floor and repeat. Also cover the entire lens: <strong>fresh tracking should stop after the transient.</strong> Old waterfall rows and the clock reference can remain visible.</p><p>This guide explains the arrangement. A successful real-camera reconstruction is still an experimental result to establish.</p></section>
+</div>
+<nav class="actions" aria-label="Open the existing project"><a href="https://anttiluode.github.io/KulmanTakaa/" target="_blank" rel="noopener noreferrer">Open the existing instrument ↗</a><a href="https://anttiluode.github.io/KulmanTakaa/actor.html" target="_blank" rel="noopener noreferrer">Open the phone actor ↗</a></nav>
+<footer class="bottom"><p>Standalone draft · works offline apart from the optional project links.</p><p><a href="https://github.com/anttiluode/KulmanTakaa/blob/61b2aa437e7f878d0c6b710dbf59000e78f68314/README.md" target="_blank" rel="noopener noreferrer">Instructions matched to the reviewed app</a> · <a href="https://openaccess.thecvf.com/content_iccv_2017/html/Bouman_Turning_Corners_Into_ICCV_2017_paper.html" target="_blank" rel="noopener noreferrer">Corner-camera research</a></p></footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const camera = {x:145,y:305};
+  const corner = {x:365,y:205};
+  const hiddenPhone = {x:535,y:98};
+  const visiblePhone = {x:535,y:320};
+  const relay = {x:333,y:254};
+  const wall = {left:55,right:365,top:36,bottom:205};
+  let visible = false;
+  let completed = 0;
+
+  // Intersect a line segment with the rectangle's boundary, independently of
+  // where the illustrative phone is drawn. The camera starts outside the wall.
+  function firstWallHit(a,b) {
+    const dx=b.x-a.x,dy=b.y-a.y;
+    let enter=0,exit=1;
+    const p=[-dx,dx,-dy,dy],q=[a.x-wall.left,wall.right-a.x,a.y-wall.top,wall.bottom-a.y];
+    for(let i=0;i<4;i++) {
+      if(Math.abs(p[i])<1e-12) { if(q[i]<0) return null; continue; }
+      const t=q[i]/p[i];
+      if(p[i]<0) enter=Math.max(enter,t); else exit=Math.min(exit,t);
+      if(enter>exit) return null;
+    }
+    if(exit<0 || enter>1) return null;
+    return {x:a.x+enter*dx,y:a.y+enter*dy};
+  }
+
+  function renderPlan() {
+    const p=visible?visiblePhone:hiddenPhone;
+    const hit=firstWallHit(camera,p);
+    $('hidden-btn').setAttribute('aria-pressed',String(!visible));
+    $('visible-btn').setAttribute('aria-pressed',String(visible));
+    $('phone-object').setAttribute('transform',`translate(${p.x} ${p.y})`);
+    $('phone-title').setAttribute('y',visible?'313':'91');
+    $('phone-title').textContent=visible?'Visible phone':'Hidden phone';
+    $('phone-subtitle').setAttribute('y',visible?'335':'113');
+    $('phone-subtitle').textContent=visible?'Wrong side.':'Upright.';
+    $('phone-direction').setAttribute('y',visible?'369':'155');
+    $('phone-direction').textContent=visible?'Pointing the camera away is not physical occlusion.':'Screen faces the corner.';
+    $('phone-direction').setAttribute('x',visible?'327':'471');
+    $('indirect-path').setAttribute('d',`M${p.x} ${p.y}L${relay.x} ${relay.y}L${camera.x} ${camera.y}`);
+    $('indirect-path').setAttribute('visibility',visible?'hidden':'visible');
+    $('relay-dot').setAttribute('visibility',visible?'hidden':'visible');
+    const end=hit||p;
+    $('direct-path').setAttribute('d',`M${camera.x} ${camera.y}L${end.x} ${end.y}`);
+    $('block-mark').setAttribute('visibility',hit?'visible':'hidden');
+    $('direct-label').setAttribute('x',visible?'240':'68');
+    $('direct-label').setAttribute('y',visible?'337':'246');
+    $('direct-label').textContent=hit?'Direct line blocked':'No wall blocks this line';
+    $('plan-title').textContent=visible?'A wrong arrangement: phone on the visible side':'Correct corner-camera arrangement, seen from above';
+    $('plan-desc').textContent=visible?'The phone is on the same side as the camera. The straight line between them crosses no wall. This arrangement does not demonstrate recovery around a corner.':'The wall blocks the straight line from the camera to the phone. Light can travel from the hidden phone to the visible floor patch, then to the camera.';
+    $('setup-state').setAttribute('data-state',visible?'bad':'good');
+    $('setup-state').innerHTML=visible?'<span aria-hidden="true">×</span><span><b>Wrong arrangement:</b> the wall does not hide the phone from the camera. Move the phone behind the edge; merely aiming down is insufficient.</span>':'<span aria-hidden="true">✓</span><span><b>Correct arrangement:</b> the camera cannot see the phone directly, but can see the floor receiving its light.</span>';
+  }
+  function renderPractice() {
+    for(let i=1;i<=3;i++) {
+      const next=i===completed+1;
+      $('point-'+i).setAttribute('data-next',String(next));
+      $('point-'+i).setAttribute('data-done',String(i<=completed));
+      $('step-'+i).setAttribute('data-active',String(next));
+    }
+    $('practice-rays').setAttribute('visibility',completed>=2?'visible':'hidden');
+    $('practice-wedge').setAttribute('visibility',completed===3?'visible':'hidden');
+  }
+  function choosePoint(n) {
+    if(completed===3) { $('click-feedback').textContent='All three points are set. Use “Practise again” to repeat.'; return; }
+    if(n!==completed+1) {
+      $('click-feedback').setAttribute('data-error','true');
+      $('click-feedback').textContent=['','Start with point 1: the corner’s foot.','Choose point 2 next: along the wall’s base.','Choose point 3 next: farther across the visible floor.'][completed+1];
+      return;
+    }
+    completed++;
+    $('click-feedback').setAttribute('data-error','false');
+    $('click-feedback').textContent=['','Good. Now choose point 2 on the wall–floor boundary.','Now choose point 3, out across the visible floor.','Geometry set. The shaded wedge is the floor patch the app samples. In the real app, learn the empty room before moving the phone.'][completed];
+    renderPractice();
+  }
+  $('hidden-btn').addEventListener('click',()=>{visible=false;renderPlan();});
+  $('visible-btn').addEventListener('click',()=>{visible=true;renderPlan();});
+  $('paths-toggle').addEventListener('change',e=>$('light-paths').setAttribute('visibility',e.target.checked?'visible':'hidden'));
+  for(let i=1;i<=3;i++) {
+    const target=$('point-'+i);
+    target.addEventListener('click',()=>choosePoint(i));
+    target.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choosePoint(i);}});
+  }
+  $('restart-practice').addEventListener('click',()=>{
+    completed=0;
+    $('click-feedback').setAttribute('data-error','false');
+    $('click-feedback').textContent='Start with point 1: the corner’s foot.';
+    renderPractice();
+    $('point-1').focus();
+  });
+  renderPlan();
+  renderPractice();
+})();
+</script>
+</body>
+</html>

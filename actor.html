@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>KulmanTakaa actor</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #e7e3da; font: 16px/1.45 system-ui, -apple-system, sans-serif; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #menu { position: fixed; inset: 0; overflow: auto; padding: 22px 18px; background: #0d0f12; }
+  #menu h1 { margin: 0 0 4px; font-size: 22px; } #menu h1 span { color: #ffb547; }
+  #menu p { color: #8b8f97; margin: 8px 0; }
+  .modes { display: grid; gap: 10px; margin: 16px 0; }
+  .modes button { text-align: left; background: #1d2128; color: #e7e3da; border: 1px solid #262b33; border-radius: 12px; padding: 12px 14px; font: inherit; }
+  .modes button b { display: block; color: #ffb547; }
+  #tag { position: fixed; left: 8px; bottom: 6px; font: 11px ui-monospace, monospace; color: #333; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="tag"></div>
+<div id="menu">
+  <h1>Kulman<span>Takaa</span> · actor</h1>
+  <p>This phone hides behind the corner and plays the hidden scene. Stand it upright with the screen facing the
+    edge, out of the camera's view, at full brightness, in a dim room. The bar moves sideways, which sweeps the
+    hidden angle as seen from the edge.</p>
+  <p>Where the bar goes is a hash of the wall clock, so the camera page can check its answer without any link
+    between the two devices. Tap the screen twice to come back here.</p>
+  <div class="modes">
+    <button data-mode="slots"><b>Slots</b>A white bar jumps between five places every 1.5 s. Scored.</button>
+    <button data-mode="color"><b>Colour</b>Same places, and the bar is red, green or blue. Scored, and the colour should come through.</button>
+    <button data-mode="sweep"><b>Sweep</b>A white bar glides back and forth every 8 s. Easy to watch, not scored.</button>
+    <button data-mode="still"><b>Still — null test</b>The bar stays in the middle. The camera page must NOT say it sees.</button>
+    <button data-mode="off"><b>Off — null test</b>Black screen. Also for learning the empty room.</button>
+  </div>
+  <p id="clock"></p>
+</div>
+<script src="core.js"></script>
+<script>
+'use strict';
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const menu = document.getElementById('menu'), tag = document.getElementById('tag');
+let mode = null, wake = null, lastTap = 0, tagUntil = 0;
+
+function size() { const d = devicePixelRatio || 1; c.width = innerWidth * d; c.height = innerHeight * d; }
+addEventListener('resize', size); size();
+
+async function start(m) {
+  mode = m;
+  menu.style.display = 'none';
+  tagUntil = performance.now() + 2500;
+  try { await document.documentElement.requestFullscreen(); } catch (e) {}
+  try { wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+document.querySelectorAll('[data-mode]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); start(b.dataset.mode); });
+c.addEventListener('pointerdown', () => {
+  const now = performance.now();
+  if (now - lastTap < 400) { mode = null; menu.style.display = ''; if (wake) { wake.release().catch(() => {}); wake = null; } }
+  lastTap = now;
+});
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && mode && !wake) { try { wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+});
+
+function frame() {
+  const W = c.width, H = c.height;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  if (mode) {
+    const s = KT.schedule(Date.now(), mode);
+    if (s.on) {
+      const bw = 0.14 * W, x = s.pos * W - bw / 2;
+      ctx.fillStyle = `rgb(${s.color[0]},${s.color[1]},${s.color[2]})`;
+      ctx.fillRect(x, 0, bw, H);
+    }
+    tag.textContent = performance.now() < tagUntil ? mode : '';
+  } else {
+    document.getElementById('clock').textContent = 'Clock: ' + new Date().toLocaleTimeString() +
+      '. Both devices should have network time on; the camera page also searches ±4 s of offset.';
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

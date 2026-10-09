@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KulmanTakaa — around the corner</title>
+<style>
+  :root {
+    --bg: #0d0f12; --panel: #15181d; --line: #262b33; --ink: #e7e3da; --dim: #8b8f97;
+    --amber: #ffb547; --amber-dim: #8a5d1c; --blue: #5aa9ff; --good: #7be08a; --bad: #ff7a6b;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 14px 16px 6px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline; }
+  h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  h1 span { color: var(--amber); }
+  .sub { color: var(--dim); }
+  .bar { padding: 4px 16px 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-right: 1px solid var(--line); border-radius: 0; }
+  .seg button:last-child { border-right: 0; }
+  button, select, label.file { background: #1d2128; color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 11px; font: inherit; cursor: pointer; }
+  button:hover, label.file:hover { border-color: #3a414c; }
+  button.on { background: var(--amber); color: #1a1206; font-weight: 600; }
+  button.rec.on { background: var(--bad); color: #1a0606; }
+  .status { font: 12px var(--mono); color: var(--dim); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 0 16px 16px; }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; min-width: 0; }
+  .panel.wide { grid-column: 1 / -1; }
+  .panel h2 { margin: 0 0 6px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+  .panel h2 b { color: var(--ink); text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .stage { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+  .stage canvas { display: block; width: 100%; height: auto; }
+  .stage canvas.ovl { position: absolute; inset: 0; height: 100%; cursor: crosshair; }
+  .hint { margin-top: 6px; min-height: 1.4em; color: var(--amber); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 8px; }
+  .row label { display: inline-flex; gap: 6px; align-items: center; color: var(--dim); }
+  .row input[type=range] { width: 110px; accent-color: var(--amber); }
+  .row output { font: 12px var(--mono); color: var(--ink); min-width: 3.5em; }
+  #wf { width: 100%; height: 300px; image-rendering: auto; background: #000; border-radius: 8px; display: block; }
+  #prof { width: 100%; height: 110px; display: block; margin-top: 8px; }
+  .axis { display: flex; justify-content: space-between; font: 11px var(--mono); color: var(--dim); margin-top: 3px; }
+  .verdict { font-size: 22px; font-weight: 700; margin: 4px 0 2px; }
+  .verdict.yes { color: var(--good); } .verdict.no { color: var(--dim); }
+  .nums { font: 13px var(--mono); color: var(--ink); }
+  .meter { position: relative; height: 14px; background: #0b0d10; border: 1px solid var(--line); border-radius: 7px; margin: 10px 0 4px; }
+  .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--amber); border-radius: 7px; }
+  .meter .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--bad); }
+  .small { font-size: 12px; color: var(--dim); }
+  a { color: var(--amber); }
+  code { font-family: var(--mono); font-size: 12px; background: #0b0d10; padding: 1px 5px; border-radius: 4px; }
+  .simonly { display: none; } body.sim .simonly { display: flex; } body:not(.sim) .simnote { display: none; }
+</style>
+</head>
+<body class="sim">
+<header>
+  <h1>Kulman<span>Takaa</span></h1>
+  <div class="sub">An ordinary camera looks at the floor beside an edge and recovers what moves on the other side.</div>
+</header>
+<div class="bar">
+  <div class="seg" id="srcSeg">
+    <button data-src="sim" class="on">Simulation</button>
+    <button data-src="cam">Camera</button>
+    <button data-src="file">Video file</button>
+  </div>
+  <select id="camSel" title="camera" hidden></select>
+  <label class="file" id="fileLbl" hidden>Choose video…<input type="file" id="fileIn" accept="video/*" hidden></label>
+  <button id="lockBtn" hidden title="Freeze auto-exposure, white balance and focus where the browser allows">Lock exposure</button>
+  <span class="status" id="status">starting…</span>
+</div>
+
+<main>
+  <section class="panel">
+    <h2>Camera · <b>the floor beside the edge</b></h2>
+    <div class="stage" id="stage">
+      <canvas id="cam" width="320" height="240"></canvas>
+      <canvas id="ovl" class="ovl"></canvas>
+    </div>
+    <div class="hint" id="hint"></div>
+    <div class="row">
+      <button id="setBtn">Set corner (3 clicks)</button>
+      <button id="emptyBtn" title="Average 3 s as the empty room, then freeze it">Learn empty room</button>
+      <button id="slowBtn" title="Background follows the room slowly">Slow background</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>What changed · <b>frame minus room, amplified</b></h2>
+    <div class="stage"><canvas id="res" width="320" height="240"></canvas></div>
+    <div class="row">
+      <label>gain <input type="range" id="resGain" min="2" max="60" value="20"><output id="resGainO"></output></label>
+      <span class="small">A real pinhole or a doorway slit shows its upside-down image here directly.</span>
+    </div>
+  </section>
+
+  <section class="panel wide">
+    <h2>Around the corner · <b>hidden angle across, time down (newest on top)</b></h2>
+    <canvas id="wf"></canvas>
+    <div class="axis"><span>0° · along the wall line</span><span>deeper around the corner →</span><span>actor says</span></div>
+    <canvas id="prof"></canvas>
+    <div class="row">
+      <label>view <select id="viewSel"><option value="color">colour</option><option value="signed">signed</option></select></label>
+      <label>sharpness <input type="range" id="smooth" min="1" max="8" step="0.5" value="3"><output id="smoothO"></output></label>
+      <label>bins <select id="bins"><option>48</option><option selected>72</option><option>96</option></select></label>
+      <label>frame averaging <input type="range" id="avg" min="1" max="8" value="2"><output id="avgO"></output></label>
+      <label>room memory <input type="range" id="tau" min="3" max="120" value="20"><output id="tauO"></output></label>
+      <label title="Fit an exposure-gain term alongside the hidden scene"><input type="checkbox" id="gainFit" checked> exposure-proof fit</label>
+      <label>resolution <select id="proc"><option value="320">320</option><option value="640">640</option></select></label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Is it real? · <b>scored against the phone behind the corner</b></h2>
+    <div class="verdict no" id="verdict">collecting…</div>
+    <div class="meter"><div class="fill" id="fill"></div><div class="tick" id="tick"></div></div>
+    <div class="nums" id="nums">—</div>
+    <p class="small">The phone page <a id="actorLink" href="actor.html" target="_blank">actor.html</a> moves a bright bar to a position
+      chosen by a hash of the wall clock every 1.5 s. This page knows the same hash, so it can check whether what it
+      recovered follows the bar. The orange bar is the correlation; the red tick is the best any of 40 <i>wrong</i>
+      schedules reaches on the same data with the same lag search. Only the orange passing the red counts.
+      Run the phone in <b>Slots</b> or <b>Colour</b>; to test the null, run it in <b>Still</b> or <b>Off</b> and the orange must stay below red.</p>
+    <div class="row">
+      <button id="scoreReset">Restart score</button>
+      <label>window <select id="win"><option value="30">30 s</option><option value="60" selected>60 s</option><option value="120">120 s</option></select></label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Bench &amp; record</h2>
+    <div class="row simonly">
+      <label>hidden light <input type="range" id="simC" min="0.1" max="5" step="0.1" value="3"><output id="simCO"></output></label>
+      <label>noise <input type="range" id="simN" min="0" max="8" step="0.5" value="2"><output id="simNO"></output></label>
+      <label><input type="checkbox" id="simAE" checked> auto-exposure</label>
+      <label>actor <select id="simMode"><option value="slots">slots</option><option value="color">colour</option><option value="sweep">sweep</option><option value="still">still (null)</option><option value="off">off (null)</option></select></label>
+    </div>
+    <p class="small simnote">The simulation is a camera standing back along a wall, looking at the floor near its edge. A bar of light
+      moves in the hidden corridor; the camera never sees it, only the floor does. Same code path as the real camera.</p>
+    <div class="row">
+      <button class="rec" id="recBtn">Record bins</button>
+      <span class="small" id="recInfo">Saves the per-angle floor brightness of every frame as JSON, for offline re-analysis
+        (<code>node tools/analyze.cjs run.json</code>).</span>
+    </div>
+  </section>
+</main>
+
+<script src="core.js"></script>
+<script src="sim.js"></script>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('kt.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('kt.' + k, JSON.stringify(v)); } catch (e) {} },
+};
+
+const S = {
+  source: 'sim', procW: 320, procH: 240, bins: 72, smooth: 3, avg: 2, tau: 20, gainFit: true,
+  stage: 0, pending: [], fps: 0, frames: 0, lastT: 0,
+  geom: null, corner: null, resBg: null, resN: 0, resMode: 'slow', resCapture: 0, resAcc: null,
+  samples: [], score: null, scale: 1e-6, recording: null, exposure: '',
+  video: null, stream: null, sim: null, simLast: 0, fileT0: 0,
+};
+
+const cam = $('cam'), ovl = $('ovl'), res = $('res'), wf = $('wf'), prof = $('prof');
+const camCtx = cam.getContext('2d', { willReadFrequently: true });
+const resCtx = res.getContext('2d');
+const procCanvas = document.createElement('canvas');
+const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
+$('actorLink').href = new URL('actor.html', location.href).href;
+$('actorLink').textContent = new URL('actor.html', location.href).href.replace(/^https?:\/\//, '');
+
+// ------------------------------------------------------------------ settings
+function bindRange(id, key, fmt, after) {
+  const el = $(id), out = $(id + 'O');
+  const show = () => { if (out) out.textContent = fmt(+el.value); };
+  el.value = LS.get(key, el.value);
+  show();
+  el.addEventListener('input', () => { show(); LS.set(key, el.value); after && after(+el.value); });
+  return +el.value;
+}
+S.smooth = bindRange('smooth', 'smooth', (v) => v.toFixed(1) + ' bins', (v) => { S.smooth = v; rebuild(); });
+S.avg = bindRange('avg', 'avg', (v) => v + ' fr', (v) => { S.avg = v; rebuild(); });
+S.tau = bindRange('tau', 'tau', (v) => v + ' s', (v) => { S.tau = v; if (S.corner) S.corner.bg.tauFrames = v * 30; });
+bindRange('resGain', 'resGain', (v) => '×' + v);
+bindRange('simC', 'simC', (v) => v.toFixed(1) + '%', (v) => { if (S.sim) S.sim.contrast = v / 100; });
+bindRange('simN', 'simN', (v) => v.toFixed(1) + ' DN', (v) => { if (S.sim) S.sim.noise = v; });
+$('bins').value = String(LS.get('bins', 72)); S.bins = +$('bins').value;
+$('bins').onchange = () => { S.bins = +$('bins').value; LS.set('bins', S.bins); rebuild(); };
+$('gainFit').checked = LS.get('gainFit', true); S.gainFit = $('gainFit').checked;
+$('gainFit').onchange = () => { S.gainFit = $('gainFit').checked; LS.set('gainFit', S.gainFit); rebuild(); };
+$('proc').onchange = () => { setProcSize(+$('proc').value); };
+$('simAE').onchange = () => { if (S.sim) S.sim.ae = $('simAE').checked; };
+$('simMode').onchange = () => { if (S.sim) S.sim.mode = $('simMode').value; resetScore(); };
+$('scoreReset').onclick = resetScore;
+$('win').onchange = resetScore;
+
+// ---------------------------------------------------------------- sources
+document.querySelectorAll('#srcSeg button').forEach((b) => b.onclick = () => setSource(b.dataset.src));
+
+function stopMedia() {
+  if (S.stream) { S.stream.getTracks().forEach((t) => t.stop()); S.stream = null; }
+  if (S.video) { S.video.pause(); S.video.removeAttribute('src'); S.video.srcObject = null; S.video = null; }
+}
+
+async function setSource(src) {
+  stopMedia();
+  S.source = src;
+  document.querySelectorAll('#srcSeg button').forEach((b) => b.classList.toggle('on', b.dataset.src === src));
+  document.body.classList.toggle('sim', src === 'sim');
+  $('camSel').hidden = src !== 'cam';
+  $('lockBtn').hidden = src !== 'cam';
+  $('fileLbl').hidden = src !== 'file';
+  S.exposure = '';
+  if (src === 'sim') {
+    S.sim = new KTSim.Sim({ w: S.procW, h: S.procH, contrast: +$('simC').value / 100, noise: +$('simN').value,
+      ae: $('simAE').checked, mode: $('simMode').value });
+    setCanvasSize(S.procW, S.procH);
+    rebuild();
+  } else if (src === 'cam') {
+    await startCamera(LS.get('camId', ''));
+  } else {
+    S.sim = null;
+    hint('Choose a video of the floor beside an edge.');
+  }
+}
+
+async function startCamera(deviceId) {
+  S.sim = null;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { hint('This browser has no camera access (needs https).'); return; }
+  try {
+    const constraints = { video: deviceId ? { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      : { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+    S.stream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch (e) { hint('Camera refused: ' + e.message); return; }
+  const v = document.createElement('video');
+  v.playsInline = true; v.muted = true; v.srcObject = S.stream;
+  await v.play().catch(() => {});
+  S.video = v;
+  await waitDims(v);
+  fitProc(v.videoWidth, v.videoHeight);
+  const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+  const cur = S.stream.getVideoTracks()[0].getSettings().deviceId;
+  $('camSel').innerHTML = devs.map((d, i) => `<option value="${d.deviceId}" ${d.deviceId === cur ? 'selected' : ''}>${d.label || 'camera ' + (i + 1)}</option>`).join('');
+  $('camSel').onchange = () => { LS.set('camId', $('camSel').value); stopMedia(); startCamera($('camSel').value); };
+  S.exposure = 'auto';
+  pumpVideo(v);
+}
+
+$('fileIn').onchange = async () => {
+  const f = $('fileIn').files[0];
+  if (!f) return;
+  stopMedia();
+  const v = document.createElement('video');
+  v.playsInline = true; v.muted = true; v.loop = true; v.src = URL.createObjectURL(f);
+  await v.play().catch(() => {});
+  S.video = v;
+  await waitDims(v);
+  // Phone videos are usually stamped when recording ENDS: start ≈ lastModified − duration.
+  S.fileT0 = f.lastModified - (v.duration || 0) * 1000;
+  fitProc(v.videoWidth, v.videoHeight);
+  pumpVideo(v);
+};
+
+function waitDims(v) {
+  return new Promise((r) => { if (v.videoWidth) r(); else v.addEventListener('loadedmetadata', () => r(), { once: true }); });
+}
+
+$('lockBtn').onclick = async () => {
+  const tr = S.stream && S.stream.getVideoTracks()[0];
+  if (!tr) return;
+  const caps = tr.getCapabilities ? tr.getCapabilities() : {};
+  const set = tr.getSettings();
+  const adv = {}, got = [];
+  if (caps.exposureMode && caps.exposureMode.includes('manual')) {
+    adv.exposureMode = 'manual'; got.push('exposure');
+    if (set.exposureTime) adv.exposureTime = set.exposureTime;
+  }
+  if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('manual')) {
+    adv.whiteBalanceMode = 'manual'; got.push('white balance');
+    if (set.colorTemperature) adv.colorTemperature = set.colorTemperature;
+  }
+  if (caps.focusMode && caps.focusMode.includes('manual')) { adv.focusMode = 'manual'; got.push('focus'); }
+  if (!got.length) { S.exposure = 'cannot lock here — keep the light steady; the exposure-proof fit is on'; return; }
+  try { await tr.applyConstraints({ advanced: [adv] }); S.exposure = 'locked: ' + got.join(', '); }
+  catch (e) { S.exposure = 'lock failed: ' + e.message; }
+  resetScore();
+};
+
+function fitProc(vw, vh) {
+  const w = S.procW;
+  S.procH = Math.round(w * vh / vw / 2) * 2;
+  setCanvasSize(w, S.procH);
+  rebuild();
+}
+function setProcSize(w) {
+  const old = S.procW;
+  S.procW = w;
+  if (S.source === 'sim') { S.procH = Math.round(w * 3 / 4); setSource('sim'); return; }
+  const v = S.video;
+  const scale = w / old;
+  const c = clicksFor();
+  if (c) LS.set('clicks.' + S.source, { C: mul(c.C, scale), W: mul(c.W, scale), S: mul(c.S, scale), w });
+  if (v) fitProc(v.videoWidth, v.videoHeight);
+}
+const mul = (p, s) => ({ x: p.x * s, y: p.y * s });
+
+function setCanvasSize(w, h) {
+  cam.width = res.width = procCanvas.width = w;
+  cam.height = res.height = procCanvas.height = h;
+  S.resBg = null;
+  sizeOverlay();
+}
+function sizeOverlay() {
+  const r = cam.getBoundingClientRect(), d = devicePixelRatio || 1;
+  ovl.width = Math.max(1, Math.round(r.width * d)); ovl.height = Math.max(1, Math.round(r.height * d));
+  drawOverlay();
+}
+addEventListener('resize', sizeOverlay);
+
+function pumpVideo(v) {
+  const step = () => {
+    if (S.video !== v) return;
+    if (v.readyState >= 2) {
+      procCtx.drawImage(v, 0, 0, S.procW, S.procH);
+      const img = procCtx.getImageData(0, 0, S.procW, S.procH);
+      const t = S.source === 'file' ? S.fileT0 + v.currentTime * 1000 : Date.now();
+      handle(img, t);
+    }
+    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(step); else requestAnimationFrame(step);
+  };
+  if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(step); else requestAnimationFrame(step);
+}
+
+function simLoop(now) {
+  if (S.source === 'sim' && S.sim && now - S.simLast >= 32) {
+    S.simLast = now;
+    const t = Date.now();
+    const px = S.sim.frame(t);
+    const img = new ImageData(new Uint8ClampedArray(px), S.procW, S.procH);
+    handle(img, t);
+  }
+  requestAnimationFrame(simLoop);
+}
+
+// ---------------------------------------------------------------- geometry
+function clicksFor() {
+  if (S.source === 'sim' && S.sim) return LS.get('clicks.sim.' + S.procW, null) || S.sim.defaultClicks();
+  const c = LS.get('clicks.' + S.source, null);
+  if (c && c.w && c.w !== S.procW) return null;
+  return c;
+}
+
+function rebuild() {
+  const c = clicksFor();
+  S.geom = null; S.corner = null;
+  if (c && c.C && c.W && c.S) {
+    S.geom = KT.buildGeometry(c, S.procW, S.procH, { bins: S.bins });
+    if (S.geom.pixels < 200) { hint('That wedge holds too few pixels — make it bigger.'); S.geom = null; }
+    else S.corner = new KT.Corner(S.geom, { smooth: S.smooth, tauFrames: S.tau * 30, smoothFrames: S.avg, gain: S.gainFit });
+  }
+  if (!S.geom && S.stage === 0) hint('Click “Set corner”, then: 1) the foot of the edge, 2) a point along the wall’s base, 3) the far end of the floor patch.');
+  else if (S.stage === 0) hint('');
+  S.scale = 1e-6;
+  clearWaterfall();
+  resetScore();
+  drawOverlay();
+}
+
+$('setBtn').onclick = () => { S.stage = 1; S.pending = []; hint('1 of 3 — click the FOOT OF THE EDGE (where the corner meets the floor).'); drawOverlay(); };
+ovl.addEventListener('pointerdown', (e) => {
+  if (!S.stage) return;
+  const r = ovl.getBoundingClientRect();
+  const p = { x: (e.clientX - r.left) / r.width * S.procW, y: (e.clientY - r.top) / r.height * S.procH };
+  S.pending.push(p);
+  if (S.stage === 1) hint('2 of 3 — click a point further along the BASE OF THE WALL, on your side.');
+  if (S.stage === 2) hint('3 of 3 — click the FAR END of the floor patch, roughly in front of the edge. The wedge sweeps from the wall to here.');
+  if (S.stage === 3) {
+    const [C, W, Sp] = S.pending;
+    const key = S.source === 'sim' ? 'clicks.sim.' + S.procW : 'clicks.' + S.source;
+    LS.set(key, { C, W, S: Sp, w: S.procW });
+    S.stage = 0;
+    rebuild();
+    return;
+  }
+  S.stage++;
+  drawOverlay();
+});
+$('emptyBtn').onclick = () => {
+  if (S.corner) S.corner.bg.capture(90);
+  S.resMode = 'capture'; S.resCapture = 90; S.resAcc = null;
+  resetScore();
+};
+$('slowBtn').onclick = () => {
+  if (S.corner) { S.corner.bg.mode = 'slow'; }
+  S.resMode = 'slow';
+  resetScore();
+};
+
+function hint(t) { $('hint').textContent = t; }
+
+function drawOverlay() {
+  const ctx = ovl.getContext('2d');
+  const sx = ovl.width / S.procW, sy = ovl.height / S.procH;
+  ctx.clearRect(0, 0, ovl.width, ovl.height);
+  ctx.lineWidth = Math.max(1, devicePixelRatio || 1);
+  if (S.stage) {
+    ctx.fillStyle = '#ffb547';
+    S.pending.forEach((p, i) => { ctx.beginPath(); ctx.arc(p.x * sx, p.y * sy, 5 * ctx.lineWidth, 0, 7); ctx.fill(); ctx.fillText(String(i + 1), p.x * sx + 8, p.y * sy - 6); });
+    return;
+  }
+  const g = S.geom;
+  if (!g) return;
+  const C = g.pts.C, W = g.pts.W;
+  const aW = Math.atan2((W.y - C.y) * sy, (W.x - C.x) * sx);
+  // angles in display space differ from proc space only if aspect differs; sx≈sy here
+  const a0 = aW + g.sign * g.thetaLo, a1 = aW + g.sign * g.thetaS;
+  const x = S.corner && S.corner.x, K = g.K;
+  for (let k = 0; k < K; k++) {
+    const b0 = a0 + (a1 - a0) * k / K, b1 = a0 + (a1 - a0) * (k + 1) / K;
+    ctx.beginPath();
+    ctx.arc(C.x * sx, C.y * sy, g.rMax * sx, b0, b1, g.sign < 0);
+    ctx.arc(C.x * sx, C.y * sy, g.rMin * sx, b1, b0, g.sign > 0);
+    ctx.closePath();
+    if (x && S.lastX) {
+      const v = S.lastX;
+      const r = clamp(v[k] / S.scale), gg = clamp(v[K + k] / S.scale), bb = clamp(v[2 * K + k] / S.scale);
+      ctx.fillStyle = `rgba(${r},${gg},${bb},0.55)`;
+    } else ctx.fillStyle = k % 2 ? 'rgba(255,181,71,0.10)' : 'rgba(255,181,71,0.18)';
+    ctx.fill();
+  }
+  ctx.strokeStyle = '#ffb547';
+  ctx.beginPath(); ctx.moveTo(C.x * sx, C.y * sy); ctx.lineTo(C.x * sx + Math.cos(a0) * g.rMax * sx * 1.15, C.y * sy + Math.sin(a0) * g.rMax * sy * 1.15); ctx.stroke();
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(C.x * sx, C.y * sy); ctx.lineTo(C.x * sx + Math.cos(a1) * g.rMax * sx, C.y * sy + Math.sin(a1) * g.rMax * sy); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ffb547';
+  ctx.beginPath(); ctx.arc(C.x * sx, C.y * sy, 4 * ctx.lineWidth, 0, 7); ctx.fill();
+}
+const clamp = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
+
+// ---------------------------------------------------------------- per frame
+function handle(img, t) {
+  camCtx.putImageData(img, 0, 0);
+  const d = img.data, n = S.procW * S.procH;
+  // residue view (per pixel room memory)
+  if (!S.resBg || S.resBg.length !== n * 3) { S.resBg = new Float32Array(n * 3); S.resN = 0; }
+  const B = S.resBg;
+  if (S.resMode === 'capture') {
+    if (!S.resAcc) S.resAcc = new Float32Array(n * 3), S.resAccN = 0;
+    for (let i = 0, j = 0; i < n; i++, j += 4) { S.resAcc[3 * i] += d[j]; S.resAcc[3 * i + 1] += d[j + 1]; S.resAcc[3 * i + 2] += d[j + 2]; }
+    S.resAccN++;
+    if (--S.resCapture <= 0) { for (let i = 0; i < B.length; i++) B[i] = S.resAcc[i] / S.resAccN; S.resMode = 'frozen'; S.resN = 3; }
+  } else if (S.resMode === 'slow' || S.resN < 3) {
+    const a = Math.max(1 / (S.resN + 1), 1 / (S.tau * 30));
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      B[3 * i] += a * (d[j] - B[3 * i]); B[3 * i + 1] += a * (d[j + 1] - B[3 * i + 1]); B[3 * i + 2] += a * (d[j + 2] - B[3 * i + 2]);
+    }
+    S.resN++;
+  }
+  const gain = +$('resGain').value;
+  const out = resCtx.createImageData(S.procW, S.procH), o = out.data;
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    o[j] = 128 + gain * (d[j] - B[3 * i]); o[j + 1] = 128 + gain * (d[j + 1] - B[3 * i + 1]); o[j + 2] = 128 + gain * (d[j + 2] - B[3 * i + 2]); o[j + 3] = 255;
+  }
+  resCtx.putImageData(out, 0, 0);
+
+  // corner camera
+  if (S.corner) {
+    const r = S.corner.stepFrame(d);
+    if (r) {
+      S.lastX = r.x;
+      let m = 0;
+      for (let i = 0; i < r.x.length; i++) m = Math.max(m, Math.abs(r.x[i]));
+      S.scale = S.scale < 1e-5 ? m : S.scale + 0.02 * (m - S.scale);
+      pushWaterfall(r, t);
+      drawProfile(r);
+      S.samples.push({ t, c: r.c });
+      const win = +$('win').value * 1000;
+      while (S.samples.length && S.samples[0].t < t - win) S.samples.shift();
+    }
+    if (S.recording) S.recording.frames.push({ t: Math.round(t), y: Array.from(S.corner.raw, (v) => Math.round(v * 100) / 100) });
+  }
+  drawOverlay();
+
+  S.frames++;
+  const now = performance.now();
+  if (now - S.lastT > 1000) {
+    S.fps = S.frames * 1000 / (now - S.lastT); S.frames = 0; S.lastT = now;
+    updateScore();
+    const bg = S.corner ? S.corner.bg.mode : '—';
+    $('status').textContent = `${S.fps.toFixed(0)} fps · ${S.procW}×${S.procH} · wedge ${S.geom ? S.geom.pixels + ' px' : 'not set'} · room: ${bg}` +
+      (S.exposure ? ' · exposure ' + S.exposure : '') + (S.recording ? ` · REC ${S.recording.frames.length} fr` : '');
+  }
+}
+
+// ---------------------------------------------------------------- waterfall
+const WF_ROWS = 540, WF_GAP = 4, WF_TRUTH = 14;
+let wfCtx = null, wfRow = null;
+function clearWaterfall() {
+  const K = S.bins;
+  wf.width = K + WF_GAP + WF_TRUTH; wf.height = WF_ROWS;
+  wfCtx = wf.getContext('2d');
+  wfCtx.fillStyle = '#000'; wfCtx.fillRect(0, 0, wf.width, wf.height);
+  wfRow = wfCtx.createImageData(wf.width, 1);
+}
+function pushWaterfall(r, t) {
+  const K = S.geom.K;
+  if (!wfCtx || wf.width !== K + WF_GAP + WF_TRUTH) clearWaterfall();
+  wfCtx.drawImage(wf, 0, 1);
+  const p = wfRow.data, sc = S.scale * 0.8 || 1;
+  const signed = $('viewSel').value === 'signed';
+  for (let k = 0; k < K; k++) {
+    const j = 4 * k;
+    if (signed) {
+      const v = r.lum[k] / sc;
+      p[j] = v > 0 ? 255 * Math.min(1, v) : 0;
+      p[j + 1] = v > 0 ? 181 * Math.min(1, v) : 60 * Math.min(1, -v);
+      p[j + 2] = v > 0 ? 71 * Math.min(1, v) : 255 * Math.min(1, -v);
+    } else {
+      p[j] = 255 * r.x[k] / sc; p[j + 1] = 255 * r.x[K + k] / sc; p[j + 2] = 255 * r.x[2 * K + k] / sc;
+    }
+    p[j + 3] = 255;
+  }
+  for (let k = K; k < K + WF_GAP + WF_TRUTH; k++) { const j = 4 * k; p[j] = p[j + 1] = p[j + 2] = 12; p[j + 3] = 255; }
+  // what the phone schedule says right now (shifted by the measured lag once found)
+  const lag = S.score && S.score.ready && S.score.sees ? S.score.lagMs : 0;
+  const tp = KT.truthPos(t + lag);
+  const col = K + WF_GAP + Math.round(1 + tp * (WF_TRUTH - 3));
+  for (const k of [col, col + 1]) { const j = 4 * k; p[j] = 255; p[j + 1] = 230; p[j + 2] = 200; }
+  wfCtx.putImageData(wfRow, 0, 0);
+}
+
+function drawProfile(r) {
+  const d = devicePixelRatio || 1, W = prof.clientWidth * d, H = prof.clientHeight * d;
+  if (prof.width !== W || prof.height !== H) { prof.width = W; prof.height = H; }
+  const ctx = prof.getContext('2d'), K = r.lum.length, sc = S.scale || 1;
+  ctx.clearRect(0, 0, W, H);
+  const y0 = H * 0.7, yS = H * 0.6;
+  ctx.strokeStyle = '#262b33'; ctx.lineWidth = d;
+  ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+  const fullW = W * K / (K + WF_GAP + WF_TRUTH);
+  const cols = ['rgba(255,90,80,.5)', 'rgba(90,230,110,.5)', 'rgba(90,150,255,.5)'];
+  for (let c = 0; c < 3; c++) {
+    ctx.strokeStyle = cols[c]; ctx.beginPath();
+    for (let k = 0; k < K; k++) { const x = (k + 0.5) / K * fullW, y = y0 - r.x[c * K + k] / sc * yS; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#e7e3da'; ctx.lineWidth = 2 * d; ctx.beginPath();
+  for (let k = 0; k < K; k++) { const x = (k + 0.5) / K * fullW, y = y0 - r.lum[k] / sc * yS; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+  if (Number.isFinite(r.c)) {
+    ctx.fillStyle = '#ffb547';
+    ctx.beginPath(); ctx.moveTo(r.c * fullW, H - 2); ctx.lineTo(r.c * fullW - 6 * d, H - 12 * d); ctx.lineTo(r.c * fullW + 6 * d, H - 12 * d); ctx.fill();
+  }
+}
+
+// ---------------------------------------------------------------- score
+function resetScore() { S.samples = []; S.score = null; renderScore(); }
+function updateScore() {
+  if (S.samples.length < 60) { S.score = null; renderScore(); return; }
+  const lagMax = S.source === 'file' ? 15000 : 4000;
+  S.score = KT.score(S.samples, { lagMaxMs: lagMax });
+  renderScore();
+}
+function renderScore() {
+  const s = S.score, v = $('verdict');
+  if (!s || !s.ready) {
+    v.textContent = S.corner ? 'collecting… (needs ≥ 10 s)' : 'set the corner first';
+    v.className = 'verdict no'; $('nums').textContent = '—';
+    $('fill').style.width = '0%'; $('tick').style.left = '0%';
+    return;
+  }
+  v.textContent = s.sees ? 'Sees around the corner' : 'Not yet';
+  v.className = 'verdict ' + (s.sees ? 'yes' : 'no');
+  $('fill').style.width = (100 * s.rhoAbs).toFixed(1) + '%';
+  $('tick').style.left = (100 * s.nullMax).toFixed(1) + '%';
+  $('nums').textContent = `|ρ| ${s.rhoAbs.toFixed(3)} · wrong-schedule best ${s.nullMax.toFixed(3)} (95%: ${s.null95.toFixed(3)}) · lag ${(s.lagMs / 1000).toFixed(1)} s · ${s.seconds.toFixed(0)} s of data`;
+}
+
+// ---------------------------------------------------------------- record
+$('recBtn').onclick = () => {
+  if (!S.recording) {
+    if (!S.geom) { hint('Set the corner before recording.'); return; }
+    S.recording = { version: 1, created: new Date().toISOString(), source: S.source, procW: S.procW, procH: S.procH,
+      bins: S.geom.K, clicks: S.geom.pts, counts: Array.from(S.geom.counts),
+      settings: { smooth: S.smooth, avg: S.avg, tau: S.tau, gainFit: S.gainFit, exposure: S.exposure,
+        sim: S.sim ? { contrast: S.sim.contrast, noise: S.sim.noise, ae: S.sim.ae, mode: S.sim.mode } : null },
+      frames: [] };
+    $('recBtn').classList.add('on'); $('recBtn').textContent = 'Stop & save';
+  } else {
+    const blob = new Blob([JSON.stringify(S.recording)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `kulmantakaa-${S.recording.created.replace(/[:.]/g, '-')}.json`;
+    a.click();
+    S.recording = null;
+    $('recBtn').classList.remove('on'); $('recBtn').textContent = 'Record bins';
+  }
+};
+
+// ---------------------------------------------------------------- go
+clearWaterfall();
+setSource('sim');
+requestAnimationFrame(simLoop);
+</script>
+</body>
+</html>
